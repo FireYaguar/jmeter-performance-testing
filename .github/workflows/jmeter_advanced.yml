@@ -1,0 +1,34 @@
+name: Advanced Performance Tests
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:   # щоб можна було запустити вручну
+
+jobs:
+  comprehensive-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Install JMeter
+        run: |
+          wget https://downloads.apache.org/jmeter/binaries/apache-jmeter-5.6.3.tgz
+          tar -xzf apache-jmeter-5.6.3.tgz
+          sudo mv apache-jmeter-5.6.3 /opt/jmeter
+          echo "/opt/jmeter/bin" >> $GITHUB_PATH
+      - name: Run Load Test
+        run: jmeter -n -t test-plans/load_comprehensive.jmx -l results/load_c.jtl -e -o reports/load_c
+      - name: Run Stress Test
+        run: jmeter -n -t test-plans/stress_comprehensive.jmx -l results/stress_c.jtl -e -o reports/stress_c
+      - name: Run Endurance Test
+        run: jmeter -n -t test-plans/endurance_comprehensive.jmx -l results/endurance_c.jtl -e -o reports/endurance_c
+      - name: Upload Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-reports
+          path: reports/
